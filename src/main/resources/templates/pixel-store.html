@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Store - Tienda de Videojuegos</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a1a; }
+        ::-webkit-scrollbar-thumb { background: #7c3aed; border-radius: 4px; }
+
+        nav {
+            position: fixed; top: 0; width: 100%; z-index: 1000;
+            background: rgba(10, 10, 26, 0.95); backdrop-filter: blur(10px);
+            padding: 0 2rem; display: flex; justify-content: space-between;
+            align-items: center; height: 70px;
+            border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+        }
+
+        .nav-brand {
+            display: flex; align-items: center; gap: 0.6rem;
+            font-size: 1.5rem; font-weight: 800; color: #fff;
+            text-decoration: none;
+        }
+
+        .nav-brand span { background: linear-gradient(135deg, #7c3aed, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .nav-brand .icon { font-size: 1.8rem; -webkit-text-fill-color: initial; color: #7c3aed; }
+
+        .nav-links { display: flex; align-items: center; gap: 2rem; list-style: none; }
+
+        .nav-links a {
+            color: #a0a0b8; text-decoration: none; font-weight: 500;
+            transition: color 0.3s; font-size: 0.95rem;
+        }
+
+        .nav-links a:hover { color: #7c3aed; }
+
+        .nav-links .btn-login {
+            padding: 0.5rem 1.5rem; background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            color: #fff; border-radius: 8px; font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .nav-links .btn-login:hover {
+            transform: translateY(-2px); box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+            color: #fff;
+        }
+        .nav-links .btn-logout {
+            padding: 0.4rem 1.2rem; background: rgba(239, 68, 68, 0.15);
+            color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600;
+        }
+        .nav-links .btn-logout:hover { background: rgba(239, 68, 68, 0.25); }
+        .nav-links .cart-link { position: relative; }
+        .nav-links .cart-count { position: absolute; top: -8px; right: -10px; background: #7c3aed; color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 50%; font-weight: 700; }
+
+        .hero {
+            margin-top: 70px; padding: 5rem 2rem 4rem;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 40%, #0a1a2e 100%);
+            text-align: center; position: relative; overflow: hidden;
+        }
+
+        .hero::before {
+            content: ''; position: absolute; top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 50%, rgba(6, 182, 212, 0.06) 0%, transparent 50%);
+        }
+
+        .hero-content { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
+
+        .hero h1 {
+            font-size: 3.2rem; font-weight: 800; margin-bottom: 1rem;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4, #10b981);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.2rem; color: #8888aa; margin-bottom: 2rem; line-height: 1.6;
+        }
+
+        .hero .btn-cta {
+            display: inline-block; padding: 1rem 2.5rem;
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            color: #fff; text-decoration: none; border-radius: 12px;
+            font-weight: 700; font-size: 1.1rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .hero .btn-cta:hover {
+            transform: translateY(-3px); box-shadow: 0 8px 30px rgba(124, 58, 237, 0.5);
+        }
+
+        .hero-badges { display: flex; justify-content: center; gap: 2rem; margin-top: 2.5rem; flex-wrap: wrap; }
+
+        .hero-badges .badge-item {
+            display: flex; align-items: center; gap: 0.5rem;
+            color: #6666aa; font-size: 0.9rem;
+        }
+
+        .hero-badges .badge-item .dot {
+            width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+        }
+
+        .dot-purple { background: #7c3aed; }
+        .dot-cyan { background: #06b6d4; }
+        .dot-green { background: #10b981; }
+
+        .section { padding: 4rem 2rem; max-width: 1200px; margin: 0 auto; }
+
+        .section-header {
+            text-align: center; margin-bottom: 3rem;
+        }
+
+        .section-header h2 {
+            font-size: 2rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;
+        }
+
+        .section-header p { color: #6666aa; font-size: 1rem; }
+
+        .games-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        .game-card {
+            background: linear-gradient(145deg, #12122a, #1a1a3a);
+            border-radius: 16px; overflow: hidden;
+            border: 1px solid rgba(124, 58, 237, 0.1);
+            transition: transform 0.4s, box-shadow 0.4s;
+            cursor: pointer; text-decoration: none; display: block; color: inherit;
+        }
+
+        .game-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(124, 58, 237, 0.15);
+            border-color: rgba(124, 58, 237, 0.3);
+        }
+
+        .game-cover {
+            height: 200px; position: relative; overflow: hidden;
+            background: #0a0a1a;
+        }
+
+        .game-cover img {
+            width: 100%; height: 100%; object-fit: cover;
+            transition: transform 0.4s;
+        }
+
+        .game-card:hover .game-cover img {
+            transform: scale(1.08);
+        }
+
+        .game-info { padding: 1.5rem; }
+
+        .game-info .game-title {
+            font-size: 1.3rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;
+        }
+
+        .game-info .game-desc {
+            color: #8888aa; font-size: 0.9rem; line-height: 1.5; margin-bottom: 1rem;
+        }
+
+        .game-info .game-meta {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .game-info .game-category {
+            padding: 0.3rem 0.8rem; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 600;
+        }
+
+        .cat-accion { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+        .cat-rpg { background: rgba(124, 58, 237, 0.15); color: #a78bfa; }
+        .cat-deportes { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+
+        .game-info .game-price {
+            font-size: 1.4rem; font-weight: 800; color: #10b981;
+        }
+
+        .game-info .game-stock {
+            font-size: 0.8rem; color: #6666aa; margin-top: 0.4rem;
+        }
+
+        .game-info .game-stock .in-stock { color: #10b981; }
+        .game-info .game-stock .low-stock { color: #f59e0b; }
+
+        .categories-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem; margin-top: 2rem;
+        }
+
+        .category-card {
+            padding: 2rem; border-radius: 16px; text-align: center;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.3s, border-color 0.3s;
+            cursor: default;
+        }
+
+        .category-card:hover { transform: translateY(-4px); }
+
+        .cat-card-accion { background: linear-gradient(145deg, #1a0a0a, #2a1212); }
+        .cat-card-accion:hover { border-color: rgba(239, 68, 68, 0.3); }
+        .cat-card-rpg { background: linear-gradient(145deg, #120a1a, #1a122a); }
+        .cat-card-rpg:hover { border-color: rgba(124, 58, 237, 0.3); }
+        .cat-card-deportes { background: linear-gradient(145deg, #0a1a12, #122a1a); }
+        .cat-card-deportes:hover { border-color: rgba(16, 185, 129, 0.3); }
+
+        .category-card .cat-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+        .category-card .cat-name { font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+        .category-card .cat-desc { color: #6666aa; font-size: 0.9rem; line-height: 1.5; }
+
+        footer {
+            margin-top: 4rem; padding: 3rem 2rem 1.5rem;
+            background: linear-gradient(145deg, #060612, #0a0a1a);
+            border-top: 1px solid rgba(124, 58, 237, 0.1);
+        }
+
+        .footer-content {
+            max-width: 1200px; margin: 0 auto;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem; margin-bottom: 2rem;
+        }
+
+        .footer-col h3 {
+            font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 1rem;
+        }
+
+        .footer-col h3 span { color: #7c3aed; }
+
+        .footer-col p, .footer-col li {
+            color: #6666aa; font-size: 0.9rem; line-height: 1.8;
+        }
+
+        .footer-col ul { list-style: none; }
+
+        .footer-col ul li::before { content: '> '; color: #7c3aed; }
+
+        .footer-bottom {
+            text-align: center; padding-top: 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            color: #444466; font-size: 0.85rem;
+        }
+
+        .footer-bottom strong { color: #6666aa; }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.2rem; }
+            .hero p { font-size: 1rem; }
+            .nav-links { gap: 1rem; }
+            .nav-links a { font-size: 0.85rem; }
+            .games-grid { grid-template-columns: 1fr; }
+            .hero-badges { flex-direction: column; align-items: center; gap: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="/tienda" class="nav-brand">
+            <span class="icon">&#x1F3AE;</span>
+            <span>Pixel Store</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="/tienda">Inicio</a></li>
+            <li><a href="#juegos">Catálogo</a></li>
+            <li><a href="#categorias">Categorías</a></li>
+            <li sec:authorize="isAuthenticated()"><a href="/cuenta">Mi Cuenta</a></li>
+            <li sec:authorize="isAuthenticated()" class="cart-link">
+                <a href="/carrito">&#x1F6D2; Carrito</a>
+                <span class="cart-count" th:if="${session.cart != null and #lists.size(session.cart) > 0}" th:text="${#lists.size(session.cart)}">0</span>
+            </li>
+            <li sec:authorize="!isAuthenticated()"><a href="/login" class="btn-login">Iniciar Sesión</a></li>
+            <li sec:authorize="isAuthenticated()">
+                <form th:action="@{/logout}" method="post" style="margin:0;">
+                    <button type="submit" class="btn-logout">Cerrar Sesión</button>
+                </form>
+            </li>
+        </ul>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Bienvenido a Pixel Store</h1>
+            <p>Descubre los mejores videojuegos al mejor precio. Explora nuestro catálogo y encuentra tu próxima aventura.</p>
+            <a href="#juegos" class="btn-cta">Explorar Catálogo</a>
+            <div class="hero-badges">
+                <span class="badge-item"><span class="dot dot-purple"></span> +50 Títulos</span>
+                <span class="badge-item"><span class="dot dot-cyan"></span> Envío Digital</span>
+                <span class="badge-item"><span class="dot dot-green"></span> Mejores Precios</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="juegos">
+        <div class="section-header">
+            <h2 th:if="${categoriaActiva == null}">Juegos Destacados</h2>
+            <h2 th:if="${categoriaActiva != null}">Juegos Filtrados</h2>
+            <p th:if="${categoriaActiva == null}">Los títulos más populares de nuestra tienda</p>
+            <p th:if="${categoriaActiva != null}">Mostrando juegos de la categoría seleccionada</p>
+        </div>
+        <div class="games-grid" th:if="${not #lists.isEmpty(videojuegos)}">
+            <a class="game-card" th:href="@{/juego/{id}(id=${game.idVideojuego})}" th:each="game, stat : ${videojuegos}">
+                <div class="game-cover">
+                    <img th:src="${game.imagenUrl}" th:alt="${game.titulo}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+                </div>
+                <div class="game-info">
+                    <div class="game-title" th:text="${game.titulo}">Título</div>
+                    <div class="game-desc" th:text="${game.descripcion}">Descripción</div>
+                    <div class="game-meta">
+                <span class="game-category"
+                      th:classappend="${game.categoria.nombre == 'Accion'} ? 'cat-accion' : (${game.categoria.nombre == 'RPG'} ? 'cat-rpg' : 'cat-deportes')"
+                              th:text="${game.categoria.nombre}">Categoría</span>
+                        <span class="game-price" th:text="'$' + ${game.precio}">$00.00</span>
+                    </div>
+                    <div class="game-stock" th:if="${game.stock > 5}">
+                        <span class="in-stock">&#10003;</span> En stock (<span th:text="${game.stock}">0</span> disponibles)
+                    </div>
+                    <div class="game-stock" th:if="${game.stock > 0 and game.stock <= 5}">
+                        <span class="low-stock">&#9888;</span> Stock bajo (<span th:text="${game.stock}">0</span> disponibles)
+                    </div>
+                    <div class="game-stock" th:if="${game.stock == 0}">
+                        <span style="color:#ef4444;">&#10007;</span> Agotado
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="section-header" th:if="${#lists.isEmpty(videojuegos)}">
+            <p style="color:#6666aa;">No hay juegos disponibles en este momento.</p>
+        </div>
+    </section>
+
+    <section class="section" id="categorias">
+        <div class="section-header">
+            <h2 th:if="${categoriaActiva == null}">Categorías</h2>
+            <h2 th:if="${categoriaActiva != null}">Categorías</h2>
+            <p>Explora nuestros juegos por género</p>
+        </div>
+        <div class="categories-grid" th:if="${not #lists.isEmpty(categorias)}">
+            <a class="category-card" th:each="cat : ${categorias}"
+               th:href="@{/tienda(categoria=${cat.idCategoria})}"
+               th:classappend="${cat.nombre == 'Accion'} ? 'cat-card-accion' : (${cat.nombre == 'RPG'} ? 'cat-card-rpg' : 'cat-card-deportes')"
+               th:style="${categoriaActiva == cat.idCategoria} ? 'border-color: #7c3aed; box-shadow: 0 0 20px rgba(124,58,237,0.2);' : ''"
+               style="cursor:pointer;text-decoration:none;display:block;">
+                <div class="cat-icon" th:text="${cat.nombre == 'Accion'} ? '&#x2694;&#xFE0F;' : (${cat.nombre == 'RPG'} ? '&#x1F9D9;' : '&#x26BD;')">&#x2694;</div>
+                <div class="cat-name" th:text="${cat.nombre}">Nombre</div>
+                <div class="cat-desc" th:text="${cat.descripcion}">Descripción</div>
+            </a>
+            <a th:if="${categoriaActiva != null}" href="/tienda" class="category-card"
+               style="cursor:pointer;text-decoration:none;display:block;background:linear-gradient(145deg,#12122a,#1a1a3a);border-radius:16px;padding:2rem;text-align:center;border:1px solid rgba(124,58,237,0.3);">
+                <div style="font-size:2.5rem;margin-bottom:1rem;">&#x1F504;</div>
+                <div style="font-size:1.2rem;font-weight:700;color:#7c3aed;margin-bottom:0.5rem;">Todas</div>
+                <div style="color:#6666aa;font-size:0.9rem;">Ver todos los juegos</div>
+            </a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-col">
+                <h3><span>Pixel</span> Store</h3>
+                <p>Tu tienda de videojuegos de confianza. Los mejores títulos al mejor precio, con envío digital inmediato.</p>
+            </div>
+            <div class="footer-col">
+                <h3>Enlaces</h3>
+                <ul>
+                    <li>Catálogo completo</li>
+                    <li>Ofertas especiales</li>
+                    <li>Novedades</li>
+                    <li>Soporte</li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h3>Contacto</h3>
+                <ul>
+                    <li>contacto@pixelstore.com</li>
+                    <li>+57 300 123 4567</li>
+                    <li>Bogotá, Colombia</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2026 Pixel Store - <strong>Juan Camilo Vargas Jaimes</strong> &amp; <strong>Jorge Andrés Roa Suarez</strong>. Todos los derechos reservados.
+        </div>
+    </footer>
+
+</body>
+</html>

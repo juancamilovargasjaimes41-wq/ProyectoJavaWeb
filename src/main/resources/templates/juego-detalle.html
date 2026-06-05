@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Pixel Store - ' + ${juego.titulo}">Detalle</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a1a; color: #e0e0e0; min-height: 100vh;
+        }
+        nav {
+            background: rgba(10, 10, 26, 0.95); backdrop-filter: blur(10px);
+            padding: 0 2rem; display: flex; justify-content: space-between;
+            align-items: center; height: 70px;
+            border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+        }
+        .nav-brand {
+            display: flex; align-items: center; gap: 0.6rem;
+            font-size: 1.5rem; font-weight: 800; color: #fff; text-decoration: none;
+        }
+        .nav-brand span { background: linear-gradient(135deg, #7c3aed, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-brand .icon { -webkit-text-fill-color: initial; color: #7c3aed; }
+        .nav-links { display: flex; align-items: center; gap: 1.5rem; list-style: none; }
+        .nav-links a { color: #a0a0b8; text-decoration: none; font-weight: 500; transition: color 0.3s; font-size: 0.9rem; }
+        .nav-links a:hover { color: #7c3aed; }
+        .nav-links .btn-login {
+            padding: 0.4rem 1.2rem; background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            color: #fff; border-radius: 8px; font-weight: 600; text-decoration: none; font-size: 0.85rem;
+        }
+        .nav-links .btn-logout {
+            padding: 0.4rem 1.2rem; background: rgba(239, 68, 68, 0.15);
+            color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600;
+        }
+        .nav-links .btn-logout:hover { background: rgba(239, 68, 68, 0.25); }
+        .nav-links .cart-link { position: relative; }
+        .nav-links .cart-count { position: absolute; top: -8px; right: -10px; background: #7c3aed; color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 50%; font-weight: 700; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; }
+        .back-link { display: inline-block; margin-bottom: 1.5rem; color: #6666aa; text-decoration: none; font-size: 0.9rem; }
+        .back-link:hover { color: #7c3aed; }
+        .detail-card {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;
+            background: linear-gradient(145deg, #12122a, #1a1a3a);
+            border-radius: 16px; padding: 2.5rem;
+            border: 1px solid rgba(124, 58, 237, 0.1);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .cover-section {
+            display: flex; flex-direction: column; gap: 1rem;
+        }
+        .cover-section img {
+            width: 100%; border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .info-section { display: flex; flex-direction: column; gap: 1.5rem; }
+        .info-section h1 {
+            font-size: 2rem; font-weight: 800; color: #fff;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .info-section .category-badge {
+            display: inline-block; padding: 0.3rem 1rem; border-radius: 20px;
+            font-size: 0.8rem; font-weight: 600; width: fit-content;
+        }
+        .cat-accion { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+        .cat-rpg { background: rgba(124, 58, 237, 0.15); color: #a78bfa; }
+        .cat-deportes { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+        .info-section .description {
+            color: #8888aa; line-height: 1.8; font-size: 1rem;
+        }
+        .info-section .meta-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+            background: rgba(0,0,0,0.2); border-radius: 12px; padding: 1.5rem;
+        }
+        .meta-item label {
+            display: block; font-size: 0.75rem; color: #6666aa;
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.3rem;
+        }
+        .meta-item .value {
+            font-size: 1.3rem; font-weight: 700;
+        }
+        .meta-item .value.price { color: #10b981; }
+        .meta-item .value.stock-in { color: #10b981; }
+        .meta-item .value.stock-low { color: #f59e0b; }
+        .meta-item .value.stock-out { color: #ef4444; }
+        .info-section .btn-buy {
+            display: inline-block; padding: 1rem 2rem;
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            color: #fff; border: none; border-radius: 12px;
+            font-size: 1.1rem; font-weight: 700; cursor: pointer; text-align: center;
+            text-decoration: none; transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .info-section .btn-buy:hover {
+            transform: translateY(-3px); box-shadow: 0 8px 30px rgba(124, 58, 237, 0.5);
+        }
+        .info-section .btn-buy:disabled {
+            background: #444; cursor: not-allowed; opacity: 0.5;
+        }
+        .info-section .btn-buy:disabled:hover {
+            transform: none; box-shadow: none;
+        }
+        .platform-tag {
+            display: inline-block; padding: 0.3rem 0.8rem; border-radius: 6px;
+            font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+            background: rgba(124, 58, 237, 0.2); color: #a78bfa;
+        }
+        @media (max-width: 768px) {
+            .detail-card { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/tienda" class="nav-brand">
+            <span class="icon">&#x1F3AE;</span> <span>Pixel Store</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="/tienda">Tienda</a></li>
+            <li sec:authorize="isAuthenticated()"><a href="/cuenta">Mi Cuenta</a></li>
+            <li sec:authorize="isAuthenticated()" class="cart-link">
+                <a href="/carrito">&#x1F6D2; Carrito</a>
+                <span class="cart-count" th:if="${session.cart != null and #lists.size(session.cart) > 0}" th:text="${#lists.size(session.cart)}">0</span>
+            </li>
+            <li sec:authorize="!isAuthenticated()"><a href="/login" class="btn-login">Iniciar Sesión</a></li>
+            <li sec:authorize="isAuthenticated()">
+                <form th:action="@{/logout}" method="post" style="margin:0;">
+                    <button type="submit" class="btn-logout">Cerrar Sesión</button>
+                </form>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <a href="/tienda" class="back-link">&larr; Volver a la tienda</a>
+
+        <div class="detail-card">
+            <div class="cover-section">
+                <img th:src="${juego.imagenUrl}" th:alt="${juego.titulo}">
+                <span class="platform-tag" th:text="${juego.plataforma}">PC</span>
+            </div>
+            <div class="info-section">
+                <h1 th:text="${juego.titulo}">Título</h1>
+                <span class="category-badge"
+                      th:classappend="${juego.categoria.nombre == 'Accion'} ? 'cat-accion' : (${juego.categoria.nombre == 'RPG'} ? 'cat-rpg' : 'cat-deportes')"
+                      th:text="${juego.categoria.nombre}">Categoría</span>
+                <p class="description" th:text="${juego.descripcion}">Descripción</p>
+
+                <div class="meta-grid">
+                    <div class="meta-item">
+                        <label>Precio</label>
+                        <div class="value price" th:text="'$' + ${juego.precio}">$00.00</div>
+                    </div>
+                    <div class="meta-item">
+                        <label>Stock</label>
+                        <div class="value" th:classappend="${juego.stock > 5} ? 'stock-in' : (${juego.stock > 0} ? 'stock-low' : 'stock-out')"
+                             th:text="${juego.stock > 0} ? ${juego.stock + ' disponibles'} : 'Agotado'">Stock</div>
+                    </div>
+                </div>
+
+                <form th:action="@{/carrito/agregar/{id}(id=${juego.idVideojuego})}" method="post" sec:authorize="isAuthenticated()">
+                    <button type="submit" class="btn-buy" th:disabled="${juego.stock == 0}"
+                            th:classappend="${juego.stock == 0} ? 'disabled' : ''">
+                        <span th:text="${juego.stock > 0} ? 'Agregar al Carrito' : 'Agotado'">Comprar</span>
+                    </button>
+                </form>
+                <a href="/login" class="btn-buy" sec:authorize="!isAuthenticated()" th:style="'text-align:center;display:block;'">
+                    Inicia Sesión para Comprar
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

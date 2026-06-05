@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Store - Mi Cuenta</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a1a; color: #e0e0e0; min-height: 100vh;
+        }
+        nav {
+            background: rgba(10, 10, 26, 0.95); backdrop-filter: blur(10px);
+            padding: 0 2rem; display: flex; justify-content: space-between;
+            align-items: center; height: 70px;
+            border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+        }
+        .nav-brand {
+            display: flex; align-items: center; gap: 0.6rem;
+            font-size: 1.4rem; font-weight: 800; color: #fff; text-decoration: none;
+        }
+        .nav-brand span { background: linear-gradient(135deg, #7c3aed, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-brand .icon { -webkit-text-fill-color: initial; color: #7c3aed; }
+        .nav-links { display: flex; align-items: center; gap: 1.5rem; list-style: none; }
+        .nav-links a { color: #a0a0b8; text-decoration: none; font-weight: 500; transition: color 0.3s; font-size: 0.9rem; }
+        .nav-links a:hover { color: #7c3aed; }
+        .nav-links .nav-user { color: #8888aa; font-size: 0.85rem; }
+        .nav-links .nav-user strong { color: #e0e0e0; }
+        .nav-links .btn-logout {
+            padding: 0.4rem 1.2rem; background: rgba(239, 68, 68, 0.15);
+            color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600;
+            transition: background 0.3s;
+        }
+        .nav-links .btn-logout:hover { background: rgba(239, 68, 68, 0.25); }
+        .nav-links .cart-link { position: relative; }
+        .nav-links .cart-count { position: absolute; top: -8px; right: -10px; background: #7c3aed; color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 50%; font-weight: 700; }
+        .container { max-width: 900px; margin: 0 auto; padding: 3rem 2rem; }
+        .profile-card {
+            background: linear-gradient(145deg, #12122a, #1a1a3a);
+            border-radius: 16px; padding: 2.5rem;
+            border: 1px solid rgba(124, 58, 237, 0.1);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .profile-header {
+            display: flex; align-items: center; gap: 1.5rem;
+            padding-bottom: 2rem; border-bottom: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 2rem;
+        }
+        .profile-avatar {
+            width: 80px; height: 80px; border-radius: 50%;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; font-weight: 700; color: #fff;
+            flex-shrink: 0;
+        }
+        .profile-info h1 { font-size: 1.6rem; color: #fff; margin-bottom: 0.3rem; }
+        .profile-info .role-badge {
+            display: inline-block; padding: 0.25rem 1rem; border-radius: 20px;
+            font-size: 0.8rem; font-weight: 600;
+        }
+        .role-admin { background: rgba(124, 58, 237, 0.2); color: #a78bfa; border: 1px solid rgba(124, 58, 237, 0.3); }
+        .role-cliente { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .details-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+        }
+        .detail-item label {
+            display: block; font-size: 0.8rem; color: #6666aa;
+            margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .detail-item .value {
+            font-size: 1rem; color: #e0e0e0; padding: 0.6rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .actions { margin-top: 2rem; display: flex; gap: 1rem; }
+        .actions .btn {
+            padding: 0.7rem 1.8rem; border-radius: 8px; text-decoration: none;
+            font-weight: 600; font-size: 0.9rem; transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .actions .btn-primary {
+            background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff;
+        }
+        .actions .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4); }
+        .actions .btn-secondary {
+            background: rgba(255,255,255,0.05); color: #a0a0b8;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .actions .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+        @media (max-width: 600px) {
+            .details-grid { grid-template-columns: 1fr; }
+            .profile-header { flex-direction: column; text-align: center; }
+            .actions { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/tienda" class="nav-brand">
+            <span class="icon">&#x1F3AE;</span> <span>Pixel Store</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="/tienda">Tienda</a></li>
+            <li><a href="/cuenta">Mi Cuenta</a></li>
+            <li class="cart-link">
+                <a href="/carrito">&#x1F6D2; Carrito</a>
+                <span class="cart-count" th:if="${session.cart != null and #lists.size(session.cart) > 0}" th:text="${#lists.size(session.cart)}">0</span>
+            </li>
+            <li><span class="nav-user"><strong th:text="${#authentication.name}">usuario</strong></span></li>
+            <li>
+                <form th:action="@{/logout}" method="post" style="margin:0;">
+                    <button type="submit" class="btn-logout">Cerrar Sesión</button>
+                </form>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="profile-avatar" th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</div>
+                <div class="profile-info">
+                    <h1 th:text="${#authentication.name}">Usuario</h1>
+                    <span class="role-badge"
+                          th:classappend="${#strings.contains(#authentication.authorities, 'ROLE_ADMIN')} ? 'role-admin' : 'role-cliente'"
+                          th:text="${#strings.contains(#authentication.authorities, 'ROLE_ADMIN')} ? 'ADMINISTRADOR' : 'CLIENTE'">
+                    </span>
+                </div>
+            </div>
+
+            <div class="details-grid">
+                <div class="detail-item">
+                    <label>Nombre de usuario</label>
+                    <div class="value" th:text="${usuario.username}">username</div>
+                </div>
+                <div class="detail-item">
+                    <label>Email</label>
+                    <div class="value" th:text="${usuario.email}">email</div>
+                </div>
+                <div class="detail-item">
+                    <label>Rol</label>
+                    <div class="value" th:text="${usuario.rol}">rol</div>
+                </div>
+                <div class="detail-item">
+                    <label>ID</label>
+                    <div class="value" th:text="${usuario.idUsuario}">id</div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <a href="/tienda" class="btn btn-primary">Ir a la Tienda</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

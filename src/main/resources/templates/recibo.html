@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Store - Pedido Confirmado</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a1a; color: #e0e0e0; min-height: 100vh;
+        }
+        nav {
+            background: rgba(10, 10, 26, 0.95); backdrop-filter: blur(10px);
+            padding: 0 2rem; display: flex; justify-content: space-between;
+            align-items: center; height: 70px;
+            border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+        }
+        .nav-brand { display: flex; align-items: center; gap: 0.6rem; font-size: 1.5rem; font-weight: 800; color: #fff; text-decoration: none; }
+        .nav-brand span { background: linear-gradient(135deg, #7c3aed, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-brand .icon { -webkit-text-fill-color: initial; color: #7c3aed; }
+        .nav-links { display: flex; align-items: center; gap: 1.5rem; list-style: none; }
+        .nav-links a { color: #a0a0b8; text-decoration: none; font-weight: 500; transition: color 0.3s; font-size: 0.9rem; }
+        .nav-links a:hover { color: #7c3aed; }
+        .nav-links .btn-logout { padding: 0.4rem 1.2rem; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+        .nav-links .btn-logout:hover { background: rgba(239, 68, 68, 0.25); }
+        .nav-links .cart-link { position: relative; }
+        .nav-links .cart-count { position: absolute; top: -8px; right: -10px; background: #7c3aed; color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 50%; font-weight: 700; }
+        .container { max-width: 800px; margin: 0 auto; padding: 3rem 2rem; }
+        .receipt {
+            background: linear-gradient(145deg, #12122a, #1a1a3a);
+            border-radius: 16px; padding: 2.5rem;
+            border: 1px solid rgba(124, 58, 237, 0.1);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .receipt-header { text-align: center; padding-bottom: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 1.5rem; }
+        .receipt-header .check { font-size: 3rem; }
+        .receipt-header h1 { font-size: 1.5rem; color: #10b981; margin-top: 0.5rem; }
+        .receipt-header p { color: #6666aa; font-size: 0.9rem; margin-top: 0.3rem; }
+        .receipt-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; background: rgba(0,0,0,0.2); border-radius: 10px; padding: 1.2rem; }
+        .receipt-meta .meta-item label { display: block; font-size: 0.75rem; color: #6666aa; text-transform: uppercase; }
+        .receipt-meta .meta-item .value { font-size: 0.95rem; color: #e0e0e0; margin-top: 0.2rem; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+        th { text-align: left; padding: 0.7rem 0.5rem; color: #6666aa; font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        td { padding: 0.7rem 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.9rem; }
+        td:last-child, th:last-child { text-align: right; }
+        td:nth-child(3), th:nth-child(3) { text-align: center; }
+        .total-row td { font-weight: 700; color: #10b981; font-size: 1.1rem; border-top: 2px solid rgba(16, 185, 129, 0.2); border-bottom: none; padding-top: 1rem; }
+        .receipt-footer { text-align: center; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); }
+        .receipt-footer .btn { display: inline-block; padding: 0.7rem 1.8rem; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; }
+        @media (max-width: 600px) {
+            .receipt-meta { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/tienda" class="nav-brand">
+            <span class="icon">&#x1F3AE;</span> <span>Pixel Store</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="/tienda">Tienda</a></li>
+            <li sec:authorize="isAuthenticated()"><a href="/cuenta">Mi Cuenta</a></li>
+            <li sec:authorize="isAuthenticated()" class="cart-link">
+                <a href="/carrito">&#x1F6D2; Carrito</a>
+                <span class="cart-count" th:if="${session.cart != null and #lists.size(session.cart) > 0}" th:text="${#lists.size(session.cart)}">0</span>
+            </li>
+            <li sec:authorize="!isAuthenticated()"><a href="/login" class="btn-login" style="padding:0.4rem 1.2rem;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border-radius:8px;font-weight:600;text-decoration:none;font-size:0.85rem;">Iniciar Sesion</a></li>
+            <li sec:authorize="isAuthenticated()">
+                <form th:action="@{/logout}" method="post" style="margin:0;">
+                    <button type="submit" class="btn-logout">Cerrar Sesion</button>
+                </form>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="receipt">
+            <div class="receipt-header">
+                <div class="check">&#x2705;</div>
+                <h1>&#x1F389; Compra Confirmada</h1>
+                <p th:text="'Gracias por tu compra, ' + ${pedido.usuario.username} + '!'">Gracias</p>
+            </div>
+
+            <div class="receipt-meta">
+                <div class="meta-item">
+                    <label>Pedido #</label>
+                    <div class="value" th:text="${pedido.idPedido}">001</div>
+                </div>
+                <div class="meta-item">
+                    <label>Fecha</label>
+                    <div class="value" th:text="${#temporals.format(pedido.fecha, 'dd/MM/yyyy HH:mm')}">fecha</div>
+                </div>
+                <div class="meta-item">
+                    <label>Cliente</label>
+                    <div class="value" th:text="${pedido.usuario.username}">usuario</div>
+                </div>
+                <div class="meta-item">
+                    <label>Email</label>
+                    <div class="value" th:text="${pedido.usuario.email}">email</div>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th style="text-align:center;">Cant</th>
+                        <th style="text-align:right;">Precio Unit.</th>
+                        <th style="text-align:right;">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="detalle : ${pedido.detalles}">
+                        <td th:text="${detalle.videojuego.titulo}">Juego</td>
+                        <td style="text-align:center;" th:text="${detalle.cantidad}">1</td>
+                        <td style="text-align:right;" th:text="'$' + ${detalle.precioUnitario}">$00.00</td>
+                        <td style="text-align:right;" th:text="'$' + ${detalle.precioUnitario * detalle.cantidad}">$00.00</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="total-row">
+                        <td colspan="3" style="text-align:right;">Total:</td>
+                        <td style="text-align:right;" th:text="'$' + ${pedido.total}">$00.00</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div class="receipt-footer">
+                <a href="/tienda" class="btn">Seguir Comprando</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
